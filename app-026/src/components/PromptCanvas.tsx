@@ -23,6 +23,10 @@ export interface PromptCanvasProps {
   lineFilter?: Set<number>
   practice?: Record<string, number>
   onLongPress?: () => void
+  /** 双击播放/暂停（分栏时由父组件统一联动两栏） */
+  onToggle?: () => void
+  /** 手动拖拽开始滚动（分栏时联动暂停另一栏） */
+  onUserPause?: () => void
   testId?: string
 }
 
@@ -37,6 +41,8 @@ export function PromptCanvas({
   lineFilter,
   practice,
   onLongPress,
+  onToggle,
+  onUserPause,
   testId,
 }: PromptCanvasProps) {
   const boxRef = useRef<HTMLDivElement>(null)
@@ -141,6 +147,7 @@ export function PromptCanvas({
         pressTimer.current = undefined
       }
       if (engine.state === 'playing' || engine.state === 'holding') engine.pause() // 手动拖拽时暂停自动滚动
+      onUserPause?.() // 分栏时同步暂停另一栏（各自的拖拽位置仍独立）
       engine.nudge(-dy)
       drag.current.y = e.clientY
       drag.current.moved = true
@@ -153,7 +160,7 @@ export function PromptCanvas({
       pressTimer.current = undefined
     }
   }
-  const onDoubleClick = () => engine.toggle()
+  const onDoubleClick = () => (onToggle ? onToggle() : engine.toggle())
 
   // 渲染窗口（基于当前行，天然留出上下预览行）
   const half = Math.ceil(vp.h / lineHeight / 2) + 1
